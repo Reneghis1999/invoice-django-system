@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br><br><br><br>
+
+<h1 class="text-center text-white bg-dark p-3 rounded">Register a New Invoice</h1>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- CUSTOMER -->
+    <div class="form-row">
+        <div class="form-group col-md-12">
+            <label for="customer">Customer</label>
+            <select name="customer" class="form-control" id="customer" required>
+                <option value="">Choose the customer ...</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}">
+                        {{ forloop.counter }}. {{ customer.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- INVOICE TYPE -->
+    <div class="form-row">
+        <div class="form-group col-md-12">
+            <label for="invoice_type">Invoice Type</label>
+            <select name="invoice_type" class="form-control" id="invoice_type" required>
+                <option value="">Choose invoice type ...</option>
+                <option value="R">RECEIPT</option>
+                <option value="P">PROFORMA INVOICE</option>
+                <option value="I">INVOICE</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ITEMS -->
+    <div id="wrapper">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="article-1">#1 Item Name</label>
+                <input required name="article" type="text" class="form-control" id="article-1">
+            </div>
+            <div class="form-group col-md-2">
+                <label for="qty-1">Quantity</label>
+                <input required name="qty" type="number" min="1" step="0.1" onchange="handleChangeSingleArticle(this)" class="form-control" id="qty-1">
+            </div>
+            <div class="form-group col-md-3">
+                <label for="unit-1">Unit Price</label>
+                <input required name="unit" type="number" min="0" step="0.01" onchange="handleChangeSingleArticle(this)" class="form-control" id="unit-1">
+            </div>
+            <div class="form-group col-md-3">
+                <label for="total-a-1">Total</label>
+                <input name="total-a" type="number" readonly class="form-control" id="total-a-1">
+            </div>
+        </div>
+    </div>
+
+    <!-- GLOBAL TOTAL -->
+    <div class="form-row mt-3">
+        <div class="form-group col-md-12">
+            <label for="total">Total</label>
+            <input type="number" step="0.01" name="total" readonly class="form-control" id="total" value="0">
+        </div>
+    </div>
+
+    <!-- COMMENT -->
+    <div class="form-row mt-3">
+        <div class="form-group col-md-12">
+            <label for="comment">Comments</label>
+            <textarea class="form-control" name="comment" id="comment"></textarea>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Save</button>
+</form>
+
+<!-- Buttons to add/remove items -->
+<div class="row mt-3">
+    <button type="button" id="btn-add" class="btn btn-outline-danger w-50 col-md-6">Add a new item line</button>
+    <button type="button" id="btn-remove" class="btn btn-outline-warning w-50 col-md-6">Remove last item line</button>
+</div>
+
+<script type="text/javascript">
+// Add a new item row dynamically
+$(document).on('click', '#btn-add', function() {
+    var number = $('#wrapper').children().length + 1;
+    let formAdd = `
+        <div class="form-row mt-2">
+            <div class="form-group col-md-4">
+                <label for="article-${number}">#${number} Item Name</label>
+                <input required name="article" type="text" class="form-control" id="article-${number}">
+            </div>
+            <div class="form-group col-md-2">
+                <label for="qty-${number}">Quantity</label>
+                <input required name="qty" type="number" min="1" step="0.1" onchange="handleChangeSingleArticle(this)" class="form-control" id="qty-${number}">
+            </div>
+            <div class="form-group col-md-3">
+                <label for="unit-${number}">Unit Price</label>
+                <input required name="unit" type="number" min="0" step="0.01" onchange="handleChangeSingleArticle(this)" class="form-control" id="unit-${number}">
+            </div>
+            <div class="form-group col-md-3">
+                <label for="total-a-${number}">Total</label>
+                <input name="total-a" type="number" readonly class="form-control" id="total-a-${number}">
+            </div>
+        </div>
+    `;
+    $("#wrapper").append(formAdd);
+});
+
+// Remove last item row
+$(document).on('click', '#btn-remove', function() {
+    if ($("#wrapper").children().length > 1) {
+        $("#wrapper").children().last().remove();
+        computeTotal();
+    }
+});
+
+// Calculate total for each item
+function handleChangeSingleArticle(element) {
+    let id = element.id;
+    let articleId = id.split('-')[1];
+
+    let qty = parseFloat($(`#qty-${articleId}`).val()) || 0;
+    let unit = parseFloat($(`#unit-${articleId}`).val()) || 0;
+
+    let totalLine = qty * unit;
+    $(`#total-a-${articleId}`).val(totalLine.toFixed(2));
+
+    computeTotal();
+}
+
+// Calculate global total
+function computeTotal() {
+    let total = 0;
+    $('[id^="total-a-"]').each(function() {
+        let val = parseFloat($(this).val()) || 0;
+        total += val;
+    });
+    $('#total').val(total.toFixed(2));
+}
+</script>
+
+{% endblock content %}
