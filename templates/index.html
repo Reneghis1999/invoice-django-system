@@ -1,196 +1,169 @@
 {% extends "base.html" %}
 {% load static %}
 
-
-
-
-
 {% block content %}
 <br><br>
 
-<div class="row">
-   <a href="#" class="btn col-md-4 btn-primary">
-      Register a new invoice <span class="badge text-bg-secondary"></span>
-   </a>
+<div class="row mb-4">
+   <div class="col-md-4">
+      <a href="{% url 'add-invoice' %}" class="btn btn-primary btn-block">
+         + New Invoice
+      </a>
+   </div>
 
-   <a href='#' class="col-md-4">
-      <span class="badge text-bg-secondary"></span>
-   </a>
+   <div class="col-md-4"></div>
 
-   <a href="#" class="btn col-md-4 btn-primary">
-      Register a new customer <span class="badge text-bg-secondary"></span>
-   </a>
-
+   <div class="col-md-4">
+      <a href="{% url 'add-customer' %}" class="btn btn-primary btn-block">
+         + New Customer
+      </a>
+   </div>
 </div>
 
-<br> <br>
-
-<div class="form-group ">
-   <input id="search" class="form-control" type="text" placeholder="Search....">
+<!-- Search -->
+<div class="form-group mb-4">
+   <input id="search" class="form-control" type="text" placeholder="Search invoices...">
 </div>
 
-<div>
-   <table class="table table-striped-columns">
+<!-- TABLE -->
+<div class="table-container">
+   <table class="table custom-table">
       <thead>
          <tr>
-            <th scope="col">#</th>
-            <th scope="col">CUSTOMERS NAME</th>
-            <th scope="col">DATE</th>
-            <th scope="col">TOTAL</th>
-            <th scope="col">PAID</th>
-            <th scope="col">TYPE OF INVOICE</th>
-            <th scope="col">ACTION</th>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Type</th>
+            <th class="text-right">Actions</th>
          </tr>
       </thead>
+
       <tbody id="myTable">
          {% if invoices %}
          {% for facture in invoices %}
          <tr>
-            <th scope="row">{{ facture.pk }}</th>
-            <td>{{facture.customer.name}}</td>
+            <td>#{{ facture.pk }}</td>
+
+            <td class="fw-bold">{{ facture.customer.name }}</td>
+
             <td>{{ facture.created_at }}</td>
-            <td>{{ facture.get_total }}</td>
+
+            <td class="fw-bold">{{ facture.get_total }} FCFA</td>
+
             <td>
                {% if facture.paid %}
-               <img src="{% static 'images/icon-yes.svg' %}" alt="True">
+                  <span class="status paid">Paid</span>
                {% else %}
-               <img src="{% static 'images/icon-no.svg' %}" alt="False">
+                  <span class="status unpaid">Unpaid</span>
                {% endif %}
             </td>
-            <td>{{facture.get_invoice_type_display }}</td>
+
+            <td>{{ facture.get_invoice_type_display }}</td>
+
             <td>
-               <a href="" title="Detail" class="badge text-white bg-success">View</a>
+               <div class="d-flex justify-content-end gap-2">
+                  <a href="#" class="btn btn-sm btn-outline-primary">View</a>
 
-               <button id="btn-invoice-sup" type="button" data-toggle="modal" data-target="#supprimer"
-                  class="badge text-white bg-danger" title="Supprimer" data-id="{{ facture.pk }}"
-                  data-customer="{{facture.customer.name}}">Delete
-               </button>
+                  <button type="button"
+                     data-toggle="modal"
+                     data-target="#modifier"
+                     data-id="{{ facture.pk }}"
+                     data-customer="{{ facture.customer.name }}"
+                     class="btn btn-sm btn-warning btn-invoice-mod">
+                     Edit
+                  </button>
 
-               <button id="btn-invoice-mod" type="button" data-toggle="modal" title="Modifier" data-target="#modifier"
-                  data-id="{{facture.pk}}" data-customer="{{facture.customer.name}}"
-                  class="badge text-dark bg-warning">Modify
-               </button>
+                  <button type="button"
+                     data-toggle="modal"
+                     data-target="#supprimer"
+                     data-id="{{ facture.pk }}"
+                     data-customer="{{ facture.customer.name }}"
+                     class="btn btn-sm btn-danger btn-invoice-sup">
+                     Delete
+                  </button>
+               </div>
             </td>
          </tr>
-
          {% endfor %}
-
-         {%else%}
-         
-         <p class="text-center text-white">No invoice found.</p>
+         {% else %}
+         <tr>
+            <td colspan="7" class="text-center text-muted">No invoice found.</td>
+         </tr>
          {% endif %}
-
-
       </tbody>
-
    </table>
 </div>
 
-<!-- Modal modifier -->
-<div class="modal fade" id="modifier" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-   aria-hidden="true">
-   <div class="modal-dialog" role="document">
+<!-- MODAL MODIFY -->
+<div class="modal fade" id="modifier">
+   <div class="modal-dialog">
       <div class="modal-content">
+
          <div class="modal-header">
-            <h5 class="modal-title text-dark text-center" id="exampleModalLabel">Modification</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-               <span aria-hidden="true">&times;</span>
-            </button>
+            <h5 class="modal-title text-dark">Edit Invoice</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
          </div>
+
          <form method="post">
             {% csrf_token %}
             <div class="modal-body">
 
                <input name="id_modified" type="hidden" id="id_modified">
 
-               <label id="label_id" class="text-dark checkbox-inline"> <strong id="strong_id"> This bill has been paid?</strong></label>
+               <p class="text-dark"><strong>Has this invoice been paid?</strong></p>
 
-               <input type="radio" id="html" name="modified" value="True">
-               <label class="text-white bg-primary" for="html">Yes</label>
-
-               <input type="radio" id="css" name="modified" value="False">
-               <label class="text-white bg-danger" for="css">No</label><br>
+               <div>
+                  <input type="radio" name="modified" value="True"> Yes
+                  <input type="radio" name="modified" value="False" class="ml-3"> No
+               </div>
 
             </div>
+
             <div class="modal-footer">
                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                <button type="submit" class="btn btn-primary">Save</button>
             </div>
          </form>
+
       </div>
    </div>
 </div>
-<!-- end modal-->
 
-<!-- Modal suppression -->
-<div class="modal fade" id="supprimer" tabindex="-1" role="dialog" aria-labelledby="sexampleModalLabel"
-   aria-hidden="true">
-   <div class="modal-dialog" role="document">
+<!-- MODAL DELETE -->
+<div class="modal fade" id="supprimer">
+   <div class="modal-dialog">
       <div class="modal-content">
-         <div class="modal-header">
-            <h5 class="modal-title text-dark" id="sexampleModalLabel">Delete Invoice</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-               <span aria-hidden="true">&times;</span>
-            </button>
-         </div>
-         <div class="modal-body">
-            <form method="post">
-               {% csrf_token %}
-               <input name="id_supprimer" type="hidden" id="id_supprimer">
-               <label id="label_id_s" class="text-dark checkbox-inline"> <strong id="strong_id_s">Are you sure you want to delete the invoice  ?</strong></label>
 
-               <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                  <button type="submit" class="btn btn-danger">Delete</button>
-               </div>
-            </form>
+         <div class="modal-header">
+            <h5 class="modal-title text-dark">Delete Invoice</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
          </div>
+
+         <form method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+
+               <input name="id_supprimer" type="hidden" id="id_supprimer">
+
+               <p class="text-dark">
+                  Are you sure you want to delete this invoice?
+               </p>
+
+            </div>
+
+            <div class="modal-footer">
+               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+               <button type="submit" class="btn btn-danger">Delete</button>
+            </div>
+         </form>
 
       </div>
    </div>
 </div>
-<!-- end modal-->
 
 <br><br>
-
-<script type="text/javascript">
-
-   // modification
-
-   $(document).on('click', '#btn-invoice-mod', function(){
-      let invoice_id = $(this).data('id');
-      let customer = $(this).data('customer');
-      $('#id_modified').val(invoice_id);
-
-   })
-
-   // deleting of invoice
-
-   $(document).on('click', '#btn-invoice-sup', function(){
-      let invoice_id = $(this).data('id');
-      let customer = $(this).data('customer');
-      $('#id_supprimer').val(invoice_id);
-
-   })
-
-
-
-</script>
-
-
-<script>
-
-   $(document).ready(function(){
-      $("#search").on("keyup", function(){
-         var value = $(this).val().toLowerCase();
-         $("#myTable tr").filter(function(){
-            $(this).toggle($(this).text().toLocaleLowerCase().indexOf(value)>-1)
-         });
-      });
-   });
-
-</script>
-
 
 
 {% endblock %}
