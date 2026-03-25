@@ -3,17 +3,33 @@ from django.views import View
 from fact_app.models import Invoice, Customer, Article
 from django.contrib import messages
 from django.db import transaction
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 
 class HomeView(View):
-    """Main View: affiche toutes les factures"""
+    """Main View: affiche toutes les factures avec pagination"""
 
     template_name = 'index.html'
 
     def get(self, request, *args, **kwargs):
-        invoices = Invoice.objects.select_related('customer', 'created_by').all()
+        # Ici On ordonne les factures par date de création décroissante
+        invoices_list = Invoice.objects.select_related('customer', 'created_by').order_by('-created_at')
+
+        # Pagination : on a 5 factures par page
+        paginator = Paginator(invoices_list, 5)
+        page = request.GET.get('page')
+
+        try:
+            invoices = paginator.page(page)
+        except PageNotAnInteger:
+            invoices = paginator.page(1)
+        except EmptyPage:
+            invoices = paginator.page(paginator.num_pages)
+
         context = {
             'invoices': invoices
         }
+
         return render(request, self.template_name, context)
 
 
@@ -27,6 +43,7 @@ class AddCustomerView(View):
 
     def post(self, request, *args, **kwargs):
         data = {
+
             'name': request.POST.get('name'),
             'email': request.POST.get('email'),
             'phone': request.POST.get('phone'),
@@ -70,36 +87,36 @@ class AddInvoiceView(View):
         }
 
         try:
-            # données de la facture
+            # Données de la facture
             customer_id = request.POST.get('customer')
             invoice_type = request.POST.get('invoice_type')
             comment = request.POST.get('comment')
 
-            # listes d'articles
+            # Listes d'articles
             articles = request.POST.getlist('article')
             qties = request.POST.getlist('qty')
             units = request.POST.getlist('unit')
 
-            # créer la facture
+            # Créer la facture
             invoice = Invoice.objects.create(
                 customer_id=customer_id,
                 created_by=request.user,
                 invoice_type=invoice_type,
-                comments=comment
+                comments=comment,
+                paid=False  # on a par défaut unpaid
             )
 
-            # création de tous les articles liés
-            items = []
-            for index, name in enumerate(articles):
-                items.append(Article(
+            # Créer tous les articles liés
+            items = [
+                Article(
                     invoice=invoice,
                     name=name,
-                    quantity=int(qties[index]),
-                    unit_price=float(units[index])
-                ))
+                    quantity=int(qties[idx]),
+                    unit_price=float(units[idx])
+                ) for idx, name in enumerate(articles)
+            ]
 
             Article.objects.bulk_create(items)
-
             messages.success(request, "Invoice and items saved successfully!")
 
         except Exception as e:
