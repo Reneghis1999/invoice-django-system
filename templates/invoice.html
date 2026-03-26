@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+/* Tout le texte en noir par défaut */
+.invoice-container, 
+.invoice-container * {
+    color: #000 !important;
+}
+
+/* Texte du tableau en blanc */
+.invoice-container table th,
+.invoice-container table td {
+    color: #fff !important;
+}
+
+/* En-tête du tableau avec fond sombre */
+.invoice-container table thead {
+    background-color: #343a40; /* gris foncé */
+}
+
+/* Lignes du tableau alternées */
+.invoice-container table tbody tr:nth-child(even) {
+    background-color: #6c757d; /* gris moyen */
+}
+.invoice-container table tbody tr:nth-child(odd) {
+    background-color: #495057; /* gris foncé */
+}
+
+/* Prix total en vert et plus grand */
+.total-price {
+    color: #28a745 !important; /* vert */
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Footer avec statut et alignement */
+.invoice-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    font-weight: bold;
+}
+</style>
+
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-body invoice-container">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="/" class="h4 text-decoration-none">Ghislain Programmer</a>
+                <div>
+                    <a href="#" class="btn btn-outline-primary me-2">
+                        <i class="icon-download"></i> Download
+                    </a>
+                    <a href="#" class="btn btn-outline-secondary">
+                        <i class="icon-printer"></i> Print
+                    </a>
+                </div>
+            </div>
+
+            <!-- BILL TO & INVOICE DETAILS -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6>Bill To:</h6>
+                    <p class="mb-1"><strong>{{ obj.customer.name }}</strong></p>
+                    <p class="mb-0">{{ obj.customer.address }}, {{ obj.customer.city }}, Cameroon</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6>Invoice Details:</h6>
+                    <p class="mb-1">{{ obj.get_invoice_type_display }} - #00{{ obj.id }}</p>
+                    <p class="mb-0">{{ obj.invoice_date_time }}</p>
+                    <p>Status: 
+                        {% if obj.paid %}
+                            <span class="badge bg-success">Paid</span>
+                        {% else %}
+                            <span class="badge bg-danger">Unpaid</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Article</th>
+                            <th>ID du produit</th>
+                            <th>Quantité</th>
+                            <th>Prix ​​unitaire</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in articles %}
+                        <tr>
+                            <td>{{ article.name }}</td>
+                            <td>{{ article.id }}</td>
+                            <td>{{ article.quantity }}</td>
+                            <td>{{ article.unit_price|floatformat:0 }} FCFA</td>
+                            <td>{{ article.get_total|floatformat:0 }} FCFA</td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="3"><strong>Comments:</strong> {{ obj.comments }}</td>
+                            <td colspan="1">Subtotal</td>
+                            <td>{{ obj.get_total|floatformat:0 }} FCFA</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Total</strong></td>
+                            <td class="total-price">{{ obj.get_total|floatformat:0 }} FCFA</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="invoice-footer">
+                <p>Thank you for your purchase!</p>
+                <div>
+                    Status: 
+                    {% if obj.paid %}
+                        <img class="icon" src="{% static 'images/icon-yes.svg' %}" alt="Paid">
+                    {% else %}
+                        <img class="icon" src="{% static 'images/icon-no.svg' %}" alt="Unpaid">
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
