@@ -2,6 +2,20 @@
 {% load static %}
 
 {% block content %}
+
+<style>
+#modifier .modal-content,
+#supprimer .modal-content{
+    color: black;
+}
+
+/* Custom styles pour les icônes et le tableau */
+.status-icon {
+    width: 20px;
+    height: 20px;
+}
+</style>
+
 <br><br>
 
 <div class="row mb-4">
@@ -10,9 +24,7 @@
          + New Invoice
       </a>
    </div>
-
    <div class="col-md-4"></div>
-
    <div class="col-md-4">
       <a href="{% url 'add-customer' %}" class="btn btn-primary btn-block">
          + New Customer
@@ -28,144 +40,184 @@
 <!-- PAGINATION -->
 {% if invoices.has_other_pages %}
 <div class="pagination-custom mb-4">
-
     {% if invoices.has_previous %}
-        <a href="?page={{ invoices.previous_page_number }}">&laquo;</a>
+    <a href="?page={{ invoices.previous_page_number }}">&laquo;</a>
     {% endif %}
 
     {% for page_number in invoices.paginator.page_range %}
-
         {% if invoices.number == page_number %}
-            <span class="active">{{ page_number }}</span>
+        <span class="active">{{ page_number }}</span>
         {% else %}
-            <a href="?page={{ page_number }}">{{ page_number }}</a>
+        <a href="?page={{ page_number }}">{{ page_number }}</a>
         {% endif %}
-
     {% endfor %}
 
     {% if invoices.has_next %}
-        <a href="?page={{ invoices.next_page_number }}">&raquo;</a>
+    <a href="?page={{ invoices.next_page_number }}">&raquo;</a>
     {% endif %}
-
 </div>
 {% endif %}
 
 <!-- TABLE -->
 <div class="table-container">
-   <table class="table custom-table">
-      <thead>
-         <tr>
-            <th>#</th>
-            <th>Customer</th>
-            <th>Date</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Type</th>
-            <th class="text-right">Actions</th>
-         </tr>
-      </thead>
+<table class="table custom-table">
+<thead>
+<tr>
+<th>#</th>
+<th>Customer</th>
+<th>Date</th>
+<th>Total</th>
+<th>Status</th>
+<th>Type</th>
+<th class="text-right">Actions</th>
+</tr>
+</thead>
 
-      <tbody id="myTable">
+<tbody id="myTable">
+{% for facture in invoices %}
+<tr>
+<td>#{{ facture.pk }}</td>
+<td class="fw-bold">{{ facture.customer.name }}</td>
+<td>{{ facture.created_at }}</td>
+<td class="fw-bold">{{ facture.get_total }} FCFA</td>
 
-         {% if invoices %}
-         {% for facture in invoices %}
+<td>
+{% if facture.paid %}
+    <img class="status-icon" src="{% static 'images/icon-yes.svg' %}" alt="Paid">
+{% else %}
+    <img class="status-icon" src="{% static 'images/icon-no.svg' %}" alt="Unpaid">
+{% endif %}
+</td>
 
-         <tr>
+<td>{{ facture.get_invoice_type_display }}</td>
 
-            <td>#{{ facture.pk }}</td>
+<td>
+<div class="d-flex justify-content-end">
+    <!-- VIEW BUTTON -->
+    <a href="{% url 'view-invoice' pk=facture.pk %}" class="btn btn-sm btn-outline-success mr-2">
+        View
+    </a>
 
-            <td class="fw-bold">
-               {{ facture.customer.name }}
-            </td>
+    <!-- EDIT BUTTON -->
+    <button
+        type="button"
+        class="btn btn-sm btn-warning mr-2 btn-invoice-mod"
+        data-toggle="modal"
+        data-target="#modifier"
+        data-id="{{ facture.pk }}"
+        data-paid="{{ facture.paid }}"
+    >
+    Edit
+    </button>
 
-            <td>
-               {{ facture.created_at }}
-            </td>
-
-            <td class="fw-bold">
-               {{ facture.get_total }} FCFA
-            </td>
-
-            <td>
-               {% if facture.paid %}
-                  <span class="status paid">Paid</span>
-               {% else %}
-                  <span class="status unpaid">Unpaid</span>
-               {% endif %}
-            </td>
-
-            <td>
-               {{ facture.get_invoice_type_display }}
-            </td>
-
-            <td>
-               <div class="d-flex justify-content-end">
-
-                  <a href="#" class="btn btn-sm btn-outline-primary mr-2">
-                     View
-                  </a>
-
-                  <button type="button"
-                     data-toggle="modal"
-                     data-target="#modifier"
-                     data-id="{{ facture.pk }}"
-                     class="btn btn-sm btn-warning mr-2 btn-invoice-mod">
-                     Edit
-                  </button>
-
-                  <button type="button"
-                     data-toggle="modal"
-                     data-target="#supprimer"
-                     data-id="{{ facture.pk }}"
-                     class="btn btn-sm btn-danger btn-invoice-sup">
-                     Delete
-                  </button>
-
-               </div>
-            </td>
-
-         </tr>
-
-         {% endfor %}
-         {% else %}
-
-         <tr>
-            <td colspan="7" class="text-center text-muted">
-               No invoice found.
-            </td>
-         </tr>
-
-         {% endif %}
-
-      </tbody>
-   </table>
+    <!-- DELETE BUTTON -->
+    <button
+        type="button"
+        class="btn btn-sm btn-danger btn-invoice-sup"
+        data-toggle="modal"
+        data-target="#supprimer"
+        data-id="{{ facture.pk }}"
+        data-customer="{{ facture.customer.name }}"
+    >
+    Delete
+    </button>
+</div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 </div>
 
-<!-- MODALS (inchangés) -->
-<!-- ... tes modals modify et delete restent identiques ... -->
+<!-- MODAL MODIFICATION -->
+<div class="modal fade" id="modifier" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+<form method="POST" id="form-modifier">
+{% csrf_token %}
+<div class="modal-header">
+<h5 class="modal-title">Modification</h5>
+<button type="button" class="close" data-dismiss="modal">&times;</button>
+</div>
 
-<br><br>
+<div class="modal-body">
+<label>This bill has been paid ?</label>
+<div>
+<label>
+<input type="radio" name="paid" value="true" id="paid_yes">
+<span class="text-primary">Yes</span>
+</label>
+&nbsp;&nbsp;
+<label>
+<input type="radio" name="paid" value="false" id="paid_no">
+<span class="text-danger">No</span>
+</label>
+</div>
+</div>
+
+<div class="modal-footer">
+<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+<button type="submit" class="btn btn-primary">Save</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+<!-- MODAL DELETE -->
+<div class="modal fade" id="supprimer" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+<form method="POST" id="form-supprimer">
+{% csrf_token %}
+<div class="modal-header">
+<h5 class="modal-title">Delete Invoice</h5>
+<button type="button" class="close" data-dismiss="modal">&times;</button>
+</div>
+
+<div class="modal-body">
+<p id="delete-message">Are you sure you want to delete this invoice ?</p>
+</div>
+
+<div class="modal-footer">
+<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+<button type="submit" class="btn btn-danger">Delete</button>
+</div>
+</form>
+</div>
+</div>
+</div>
 
 <script>
-
 $(document).ready(function(){
+    // SEARCH
+    $("#search").on("keyup", function(){
+        var value = $(this).val().toLowerCase();
+        $("#myTable tr").filter(function(){
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
 
-   $("#search").on("keyup", function(){
+    // EDIT MODAL
+    $(".btn-invoice-mod").click(function(){
+        var id = $(this).data("id");
+        var paid = $(this).data("paid");
+        $("#form-modifier").attr("action","/invoice/update/"+id+"/");
+        if(paid){
+            $("#paid_yes").prop("checked",true);
+        }else{
+            $("#paid_no").prop("checked",true);
+        }
+    });
 
-      var value = $(this).val().toLowerCase();
-
-      $("#myTable tr").filter(function(){
-
-         $(this).toggle(
-            $(this).text().toLowerCase().indexOf(value) > -1
-         );
-
-      });
-
-   });
-
+    // DELETE MODAL
+    $(".btn-invoice-sup").click(function(){
+        var id = $(this).data("id");
+        var customer = $(this).data("customer");
+        $("#form-supprimer").attr("action","/invoice/delete/"+id+"/");
+        $("#delete-message").text("Are you sure you want to delete the invoice of " + customer + " ?");
+    });
 });
-
 </script>
 
 {% endblock %}
