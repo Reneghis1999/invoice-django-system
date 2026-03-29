@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Invoice</title>
+
+<style>
+body {
+    font-family: 'Arial', sans-serif;
+    background: #f4f6f8;
+    color: #333333;
+    padding: 40px;
+}
+
+.invoice-box {
+    max-width: 800px;
+    margin: auto;
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.header {
+    font-size: 32px;
+    font-weight: bold;
+    color: #2f71c1;
+    margin-bottom: 40px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.col-left {
+    width: 48%;
+}
+
+.col-right {
+    width: 48%;
+    text-align: right;
+}
+
+h4 {
+    margin-bottom: 10px;
+    color: #2f71c1;
+    font-size: 16px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+    font-weight: bold;
+}
+
+p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+}
+
+table th {
+    background: #e8f0ff;
+    padding: 12px;
+    text-align: left;
+    color: #2f71c1;
+    font-size: 14px;
+    border-bottom: 2px solid #ccc;
+    font-weight: bold;
+}
+
+table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+}
+
+table tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.total-row td {
+    font-weight: bold;
+    font-size: 16px;
+    background: #f0f4ff;
+}
+
+.total-price {
+    font-size: 18px;
+    color: #2f71c1;
+    font-weight: bold;
+}
+
+.footer {
+    margin-top: 40px;
+    font-size: 13px;
+    text-align: center;
+    color: #666;
+}
+
+.status-paid {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-unpaid {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="invoice-box">
+
+    <div class="header">
+        Ghislain Programmer
+    </div>
+
+    <div class="row">
+        <!-- Bill To -->
+        <div class="col-left">
+            <h4>Bill To</h4>
+            <p><strong>{{ obj.customer.name }}</strong></p>
+            <p>{{ obj.customer.address }}</p>
+            <p>{{ obj.customer.city }}, Togo</p>
+        </div>
+
+        <!-- Invoice Details -->
+        <div class="col-right">
+            <h4>Invoice Details</h4>
+            <p>{{ obj.get_invoice_type_display }} - #00{{ obj.id }}</p>
+            <p>{{ obj.invoice_date_time }}</p>
+            <p>Status: 
+                {% if obj.paid %}
+                    <span class="status-paid">PAID</span>
+                {% else %}
+                    <span class="status-unpaid">UNPAID</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th>ID produit</th>
+                <th>Quantité</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for article in articles %}
+            <tr>
+                <td>{{ article.name }}</td>
+                <td>{{ article.id }}</td>
+                <td>{{ article.quantity }}</td>
+                <td>{{ article.unit_price|floatformat:0 }} FCFA</td>
+                <td>{{ article.get_total|floatformat:0 }} FCFA</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="3"><strong>Comments:</strong> {{ obj.comments }}</td>
+                <td>Subtotal</td>
+                <td>{{ obj.get_total|floatformat:0 }} FCFA</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="4" style="text-align:right;">TOTAL</td>
+                <td class="total-price">{{ obj.get_total|floatformat:0 }} FCFA</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="footer">
+        <p>Thank you for your purchase! {{date}}</p>
+        <p>Status: 
+            {% if obj.paid %}
+                <span class="status-paid">YES</span>
+            {% else %}
+                <span class="status-unpaid">NO</span>
+            {% endif %}
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>
