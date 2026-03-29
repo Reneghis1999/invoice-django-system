@@ -4,13 +4,22 @@ from django.views.generic import ListView
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
+
+import pdfkit
+
+import datetime
+
+from django.template.loader import get_template
 
 from fact_app.models import Invoice, Customer, Article
 
+from .utils import pagination, get_invoice
 
-# ---------------------------
-# HOME VIEW -> LISTVIEW
-# ---------------------------
+
+
+# HOME VIEW -> ici la LISTVIEW
+
 class HomeView(LoginRequiredMixin, ListView):
     """Afficher les factures avec pagination pour l'utilisateur connecté"""
     
@@ -26,9 +35,8 @@ class HomeView(LoginRequiredMixin, ListView):
                               .order_by('-created_at')
 
 
-# ---------------------------
 # CUSTOMER
-# ---------------------------
+
 class AddCustomerView(LoginRequiredMixin, View):
     """Ajouter un client"""
 
@@ -59,9 +67,9 @@ class AddCustomerView(LoginRequiredMixin, View):
         return redirect("add-customer")
 
 
-# ---------------------------
+
 # INVOICE
-# ---------------------------
+
 class AddInvoiceView(LoginRequiredMixin, View):
     """Créer une facture avec ses articles"""
 
@@ -157,19 +165,45 @@ class InvoiceVisualizationView(LoginRequiredMixin, View):
     template_name = 'invoice.html'
 
     def get(self, request, *args, **kwargs):
+
         pk = kwargs.get('pk')
-        obj = get_object_or_404(Invoice, pk=pk)
 
-        # Vérifier que l'utilisateur est propriétaire de la facture
-        if obj.created_by != request.user:
-            messages.error(request, "Unauthorized action")
-            return redirect("home")
-
-        articles = obj.article_set.all()
-
-        context = {
-            'obj': obj,
-            'articles': articles
-        }
+        context = get_invoice(pk)
+       
 
         return render(request, self.template_name, context)
+    
+
+def get_invoice_pdf(request, *args, **kwargs):
+    """Generate pdf file from html file"""
+
+    pk = kwargs.get('pk')
+
+    context = get_invoice(pk)
+
+    context['date'] = datetime.datetime.today()
+
+    # récupérer le template html
+    template = get_template('invoice-pdf.html')
+
+    html = template.render(context)
+
+    # chemin wkhtmltopdf (IMPORTANT pour Windows)
+    config = pdfkit.configuration(
+        wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+    )
+
+    options = {
+        'page-size': 'Letter',
+        'encoding': 'UTF-8',
+        'enable-local-file-access': ""
+    }
+
+    # génération du pdf
+    pdf = pdfkit.from_string(html, False, configuration=config, options=options)
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+
+    response['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
+
+    return response

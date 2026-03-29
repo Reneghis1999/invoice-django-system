@@ -13,4 +13,7 @@ urlpatterns = [
     path('invoice/delete/<uuid:id>/', views.DeleteInvoiceView.as_view(), name='delete-invoice'),
     
     path('view-invoice/<uuid:pk>/', views.InvoiceVisualizationView.as_view(), name='view-invoice'),
+
+    path('invoice-pdf/<uuid:pk>/', views.get_invoice_pdf, name ="invoice-pdf")
+
 ]
