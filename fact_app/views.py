@@ -25,7 +25,7 @@ from .decorators import *
 
 # HOME VIEW -> ici la LISTVIEW
 
-class HomeView(LoginRequiredSuperuserMixim, ListView):
+class HomeView(LoginRequiredSuperuserMixin, ListView):
     """Afficher les factures avec pagination pour l'utilisateur connecté"""
     
     model = Invoice
@@ -42,7 +42,7 @@ class HomeView(LoginRequiredSuperuserMixim, ListView):
 
 # CUSTOMER
 
-class AddCustomerView(LoginRequiredSuperuserMixim, View):
+class AddCustomerView(LoginRequiredSuperuserMixin, View):
     """Ajouter un client"""
 
     template_name = "add_customer.html"
@@ -75,7 +75,7 @@ class AddCustomerView(LoginRequiredSuperuserMixim, View):
 
 # INVOICE
 
-class AddInvoiceView(LoginRequiredSuperuserMixim, View):
+class AddInvoiceView(LoginRequiredSuperuserMixin, View):
     """Créer une facture avec ses articles"""
 
     template_name = "add_invoice.html"
@@ -125,7 +125,7 @@ class AddInvoiceView(LoginRequiredSuperuserMixim, View):
         return render(request, self.template_name, {"customers": customers})
 
 
-class UpdateInvoiceView(LoginRequiredSuperuserMixim, View):
+class UpdateInvoiceView(LoginRequiredSuperuserMixin, View):
     """Modifier le statut paid"""
 
     def post(self, request, id, *args, **kwargs):
@@ -145,7 +145,7 @@ class UpdateInvoiceView(LoginRequiredSuperuserMixim, View):
         return redirect("home")
 
 
-class DeleteInvoiceView(LoginRequiredSuperuserMixim, View):
+class DeleteInvoiceView(LoginRequiredSuperuserMixin, View):
     """Supprimer une facture"""
 
     def post(self, request, id, *args, **kwargs):
@@ -164,7 +164,7 @@ class DeleteInvoiceView(LoginRequiredSuperuserMixim, View):
         return redirect("home")
 
 
-class InvoiceVisualizationView(LoginRequiredSuperuserMixim, View):
+class InvoiceVisualizationView(LoginRequiredSuperuserMixin, View):
     """Visualiser une facture avec ses articles"""
 
     template_name = 'invoice.html'

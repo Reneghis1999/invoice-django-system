@@ -22,7 +22,7 @@ def superuser_required(
     return actual_decorator
 
 
-class LoginRequiredSuperuserMixim(UserPassesTestMixin):
+class LoginRequiredSuperuserMixin(UserPassesTestMixin):
     """ Mixin for superuser"""
 
     def test_func(self):
