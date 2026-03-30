@@ -10,17 +10,22 @@ import pdfkit
 
 import datetime
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 from django.template.loader import get_template
 
 from fact_app.models import Invoice, Customer, Article
 
 from .utils import pagination, get_invoice
 
+from .decorators import *
+
 
 
 # HOME VIEW -> ici la LISTVIEW
 
-class HomeView(LoginRequiredMixin, ListView):
+class HomeView(LoginRequiredSuperuserMixim, ListView):
     """Afficher les factures avec pagination pour l'utilisateur connecté"""
     
     model = Invoice
@@ -37,7 +42,7 @@ class HomeView(LoginRequiredMixin, ListView):
 
 # CUSTOMER
 
-class AddCustomerView(LoginRequiredMixin, View):
+class AddCustomerView(LoginRequiredSuperuserMixim, View):
     """Ajouter un client"""
 
     template_name = "add_customer.html"
@@ -70,7 +75,7 @@ class AddCustomerView(LoginRequiredMixin, View):
 
 # INVOICE
 
-class AddInvoiceView(LoginRequiredMixin, View):
+class AddInvoiceView(LoginRequiredSuperuserMixim, View):
     """Créer une facture avec ses articles"""
 
     template_name = "add_invoice.html"
@@ -120,7 +125,7 @@ class AddInvoiceView(LoginRequiredMixin, View):
         return render(request, self.template_name, {"customers": customers})
 
 
-class UpdateInvoiceView(LoginRequiredMixin, View):
+class UpdateInvoiceView(LoginRequiredSuperuserMixim, View):
     """Modifier le statut paid"""
 
     def post(self, request, id, *args, **kwargs):
@@ -140,7 +145,7 @@ class UpdateInvoiceView(LoginRequiredMixin, View):
         return redirect("home")
 
 
-class DeleteInvoiceView(LoginRequiredMixin, View):
+class DeleteInvoiceView(LoginRequiredSuperuserMixim, View):
     """Supprimer une facture"""
 
     def post(self, request, id, *args, **kwargs):
@@ -159,7 +164,7 @@ class DeleteInvoiceView(LoginRequiredMixin, View):
         return redirect("home")
 
 
-class InvoiceVisualizationView(LoginRequiredMixin, View):
+class InvoiceVisualizationView(LoginRequiredSuperuserMixim, View):
     """Visualiser une facture avec ses articles"""
 
     template_name = 'invoice.html'
@@ -173,7 +178,7 @@ class InvoiceVisualizationView(LoginRequiredMixin, View):
 
         return render(request, self.template_name, context)
     
-
+@superuser_required
 def get_invoice_pdf(request, *args, **kwargs):
     """Generate pdf file from html file"""
 
